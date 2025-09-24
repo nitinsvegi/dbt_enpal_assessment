@@ -1,0 +1,24 @@
+version: 2
+models:
+- name: stg_users
+  description: A staging table that holds user data
+  owner: nvegi
+  meta:
+    grain: user_id
+  columns:
+  - name: user_id
+    description: Primary key for user table
+    tests:
+    - unique
+    - not_null
+  - name: user_name
+    description: User Name
+    tests:
+    - not_null
+  - name: user_email
+    description: User Email
+  - name: dwh_creation_timestamp
+    description: '{{ doc("dwh_creation_timestamp") }}'
+  - name: dwh_modified_timestamp
+    description: '{{ doc("dwh_modified_timestamp") }}'
+
