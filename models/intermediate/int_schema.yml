@@ -1,0 +1,73 @@
+version: 2
+
+models:
+
+# -------------------
+# int_deal_changes
+# -------------------
+- name: int_deal_changes
+  description: Intermediate model for deal changes.
+  owner: nvegi
+  meta:
+    grain: deal_id_sk
+  columns:
+    - name: deal_id_sk
+      description: Surrogate key for the deal change record. Created as CONCAT(deal_id, '_', rn) to ensure global uniqueness across all rows.
+      tests:
+        - unique
+        - not_null
+    - name: deal_id
+      description: Original deal identifier from Pipedrive.
+      tests:
+        - not_null
+    - name: deal_change_timestamp
+      description: The original timestamp from the source system when this deal change occurred (changed_time).
+    - name: deal_updated_field_key
+      description: Field key that was changed.
+    - name: deal_new_value
+      description: New value after the deal change. Can represent different types of updates depending on deal_updated_field_key i.e. timestamp of deal creation (add_time), user assigned to the deal (user_id), stage ID (maps to stages table), lost reason ID (maps to stg_lost_reasons table)
+    - name: stage_name
+      description: ame of the stage. Examples are Lead Generation, Qualified Lead, Needs Assessment, etc. Used for reporting and display purposes.
+    - name: lost_reason_name
+      description: Name of the lost reason. Examples are Customer Not Ready, Pricing Issue, Unreachable Customer, etc. Used for reporting and display purposes.
+    - name: dwh_creation_timestamp
+      description: '{{ doc("dwh_creation_timestamp") }}'
+    - name: dwh_modified_timestamp
+      description: '{{ doc("dwh_modified_timestamp") }}'
+
+# -------------------
+# int_activity
+# -------------------
+- name: int_activity
+  description: Intermediate model for activities.
+  owner: nvegi
+  meta:
+    grain: activity_id
+  columns:
+    - name: activity_id
+      description: Primary key for activity table (deduped).
+      tests:
+        - unique
+        - not_null
+    - name: deal_id
+      description: Foreign key to deal table.
+    - name: user_id
+      description: Foreign key to user table.
+    - name: user_name
+      description: Name of the user assigned to the activity.
+    - name: user_email
+      description: Email of the user assigned to the activity.
+    - name: activity_type_short
+      description: Short code for the activity type (links to activity_type table).
+    - name: activity_type_name
+      description: Full descriptive name of the activity type.
+    - name: is_activity_done_status
+      description: Status of the activity (done or not).
+    - name: is_activity_type_active
+      description: Indicates whether the activity type is active.
+    - name: activity_due_timestamp
+      description: Scheduled due timestamp for the activity.
+    - name: dwh_creation_timestamp
+      description: '{{ doc("dwh_creation_timestamp") }}'
+    - name: dwh_modified_timestamp
+      description: '{{ doc("dwh_modified_timestamp") }}'

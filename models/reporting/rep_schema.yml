@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: rep_sales_funnel_monthly
+    description: >
+      Aggregated monthly sales funnel report combining stage-based, activity-based, and lost reason-based events. 
+      Shows the number of deals at each funnel step/KPI per month.
+    owner: nvegi
+    meta:
+      grain: month_year + funnel_step  # Each row is unique by month and funnel step
+      kpi_source: 'Stage changes, activities, lost reasons'
+    columns:
+      - name: month_year
+        description: >
+          The month of the deal activity or stage change, formatted as MM-YYYY.
+          Represents the first day of the month for aggregation purposes.
+        tests:
+          - not_null
+      - name: kpi_name
+        description: >
+          Name of the KPI corresponding to the funnel step. Includes:
+          - Stage-based: Lead Generation, Qualified Lead, Needs Assessment, etc.
+          - Activity-based: Sales Call 1/2, Follow-up/Customer Success, Closing
+          - Lost Reason-based: Customer Not Ready, Pricing Issues, etc.
+        tests:
+          - not_null
+      - name: funnel_step
+        description: >
+          Funnel step identifier corresponding to the KPI. 
+        tests:
+          - not_null
+      - name: deals_count
+        description: >
+          Count of unique deals in the given month and funnel step.
+          Aggregated across stage-based, activity-based, and lost reason-based events.
+        tests:
+          - not_null

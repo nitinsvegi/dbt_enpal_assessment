@@ -210,3 +210,321 @@ ORDER BY user_id DESC
 LIMIT 100;
 
 -------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Query to show all the deal_id's in the stg_activity table that are not present in the stg_deal_changes table
+SELECT DISTINCT(a.deal_id)
+FROM public_pipedrive_analytics.stg_activity AS a
+LEFT JOIN public_pipedrive_analytics.stg_deal_changes AS d
+  ON a.deal_id = d.deal_id
+WHERE d.deal_id IS NULL;
+-- This shows 4553 deal_id's in the stg_activity table that are not present in the stg_deal_changes table
+
+
+-- Query to show all the deal_id's in the stg_deal_changes table that are not present in the stg_activity table
+SELECT DISTINCT(d.deal_id)
+FROM public_pipedrive_analytics.stg_deal_changes AS d
+LEFT JOIN public_pipedrive_analytics.stg_activity AS a
+  ON d.deal_id = a.deal_id
+WHERE a.deal_id IS NULL;
+-- This shows 1987 deal_id's in the stg_deal_changes table that are not present in the stg_activity table
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+-- test queires for staging, intermediate and reporting tables before inserting the logic into the models
+
+
+-- Unnest the JSON array to get one row per lost reason
+SELECT
+    CAST(v.value->>'id' AS INT) AS lost_reason_id,   -- Unique identifier for the lost reason
+    v.value->>'label' AS lost_reason_name           -- Name of the lost reason
+FROM public_pipedrive_analytics.stg_fields f
+JOIN LATERAL jsonb_array_elements(f.field_value_options) AS v(value) ON TRUE
+WHERE f.field_key = 'lost_reason';
+
+SELECT *
+FROM public_pipedrive_analytics.stg_stages
+LIMIT 100;
+
+SELECT *
+FROM public_pipedrive_analytics.stg_deal_changes
+LIMIT 100;
+
+SELECT *
+FROM public_pipedrive_analytics.int_deal_changes
+WHERE TRUE 
+    AND deal_id = 845762;
+
+    SELECT
+        b.*
+        , lr.lost_reason_name
+    FROM public_pipedrive_analytics.stg_deal_changes b
+    LEFT JOIN public_pipedrive_analytics.stg_lost_reasons lr
+     ON b.deal_new_value = CAST(lr.lost_reason_id AS TEXT)
+      WHERE TRUE
+        AND b.deal_updated_field_key = 'lost_reason'
+
+WITH stage_enriched AS (
+    SELECT
+        b.deal_id_sk
+        , b.deal_id
+        , b.deal_change_timestamp
+        , b.deal_updated_field_key
+        , b.deal_new_value
+        , s.stage_name
+        , NULL AS lost_reason_name
+        , b.dwh_creation_timestamp
+        , b.dwh_modified_timestamp
+    FROM public_pipedrive_analytics.stg_deal_changes b
+    LEFT JOIN public_pipedrive_analytics.stg_stages s
+     ON b.deal_new_value = CAST(s.stage_id AS TEXT)
+    WHERE TRUE
+        AND b.deal_updated_field_key = 'stage_id'
+),
+
+-- Bring in lost reason names when the change refers to lost_reason
+lost_reason_enriched AS (
+    SELECT
+        b.deal_id_sk
+        , b.deal_id
+        , b.deal_change_timestamp
+        , b.deal_updated_field_key
+        , b.deal_new_value
+        , NULL AS stage_name
+        , lr.lost_reason_name
+        , b.dwh_creation_timestamp
+        , b.dwh_modified_timestamp
+    FROM public_pipedrive_analytics.stg_deal_changes b
+    LEFT JOIN public_pipedrive_analytics.stg_lost_reasons lr
+     ON  b.deal_new_value = CAST(lr.lost_reason_id AS TEXT)
+    WHERE TRUE
+        AND b.deal_updated_field_key = 'lost_reason'
+
+)
+
+SELECT *
+FROM lost_reason_enriched
+WHERE TRUE
+    AND lost_reason_name IS NOT NULL
+
+
+SELECT
+    --EXTRACT(MONTH FROM deal_change_timestamp) AS month
+    TO_CHAR(deal_change_timestamp, 'MM-YYYY') AS month_year
+    ,  CASE 
+         WHEN stage_name = 'Lead Generation' THEN 'Lead Generation'
+         WHEN stage_name = 'Qualified Lead' THEN 'Qualified Lead'
+         WHEN stage_name = 'Needs Assessment' THEN 'Needs Assessment'
+         WHEN stage_name = 'Proposal/Quote Preparation' THEN 'Proposal/Quote Preparation'
+         WHEN stage_name = 'Negotiation' THEN 'Negotiation'
+         WHEN stage_name = 'Closing' THEN 'Closing'
+         WHEN stage_name = 'Implementation/Onboarding' THEN 'Implementation/Onboarding'
+         WHEN stage_name = 'Follow-up/Customer Success' THEN 'Follow-up/Customer Success'
+         WHEN stage_name = 'Renewal/Expansion' THEN 'Renewal/Expansion'
+         ELSE NULL
+      END AS kpi_name
+    , CASE 
+        WHEN stage_name = 'Lead Generation' THEN 'Step 1'
+        WHEN stage_name = 'Qualified Lead' THEN 'Step 2'
+        WHEN stage_name = 'Needs Assessment' THEN 'Step 3'
+        WHEN stage_name = 'Proposal/Quote Preparation' THEN 'Step 4'
+        WHEN stage_name = 'Negotiation' THEN 'Step 5'
+        WHEN stage_name = 'Closing' THEN 'Step 6'
+        WHEN stage_name = 'Implementation/Onboarding' THEN 'Step 7'
+        WHEN stage_name = 'Follow-up/Customer Success' THEN 'Step 8'
+        WHEN stage_name = 'Renewal/Expansion' THEN 'Step 9'
+        ELSE NULL
+        END AS funnel_step
+    , deal_id
+FROM public_pipedrive_analytics.int_deal_changes
+WHERE TRUE
+    AND stage_name IS NOT NULL
+ORDER BY 1 DESC, funnel_step ASC;
+
+
+SELECT *
+FROM public_pipedrive_analytics.int_deal_changes
+WHERE TRUE
+    AND lost_reason_name IS NOT NULL
+
+
+SELECT
+    TO_CHAR(deal_change_timestamp, 'MM-YYYY') AS month_year
+    , lost_reason_name AS kpi_name
+    , CASE 
+        WHEN lost_reason_name = 'Customer Not Ready' THEN 'Step 1'
+        WHEN lost_reason_name = 'Pricing Issues' THEN 'Step 2'
+        WHEN lost_reason_name = 'Unreachable Customer	' THEN 'Step 3'
+        WHEN lost_reason_name = 'Product Mismatch' THEN 'Step 4'
+        WHEN lost_reason_name = 'Duplicate Entry' THEN 'Step 5'
+        ELSE NULL
+      END AS funnel_step
+    , deal_id
+FROM public_pipedrive_analytics.int_deal_changes
+WHERE TRUE
+    AND lost_reason_name IS NOT NULL
+ORDER BY 1 DESC, funnel_step ASC;
+
+WITH user_enriched AS (
+SELECT
+    b.activity_id
+    , b.deal_id
+    , b.user_id
+    , u.user_name
+    , u.user_email
+    , b.activity_type_short
+    , b.is_activity_done_status
+    , b.activity_due_timestamp
+    , b.dwh_creation_timestamp
+    , b.dwh_modified_timestamp
+FROM public_pipedrive_analytics.stg_activity b
+LEFT JOIN public_pipedrive_analytics.stg_users u
+    ON b.user_id = u.user_id
+), 
+activity_type_enriched AS (
+SELECT
+    ue.*
+    , at.activity_type_name
+    , at.is_activity_type_active
+FROM user_enriched ue
+LEFT JOIN public_pipedrive_analytics.stg_activity_types at
+    ON ue.activity_type_short = at.activity_type_short
+)
+SELECT *
+FROM activity_type_enriched;
+
+
+
+SELECT
+    -- EXTRACT(MONTH FROM activity_due_timestamp) AS month
+    TO_CHAR(activity_due_timestamp, 'MM-YYYY') AS month_year
+    , CASE 
+        WHEN activity_type_short = 'meeting' THEN 'Sales Call 2'
+        WHEN activity_type_short = 'sc_2' THEN 'Sales Call 2'
+        WHEN activity_type_short = 'follow_up' THEN 'Follow-up/Customer Success'
+        WHEN activity_type_short = 'after_close_call' THEN 'Closing'
+        ELSE NULL
+        END AS kpi_name
+    , CASE 
+        WHEN activity_type_short = 'meeting' THEN 'Step 2.1'
+        WHEN activity_type_short = 'sc_2' THEN 'Step 3.1'
+        WHEN activity_type_short = 'after_close_call' THEN 'Step 6'
+        WHEN activity_type_short = 'follow_up' THEN 'Step 8'
+        ELSE NULL
+        END AS funnel_step
+    , deal_id
+FROM public_pipedrive_analytics.int_activity
+WHERE TRUE
+    AND activity_type_short IN ('meeting','sc_2','follow_up','after_close_call')
+
+
+
+
+SELECT
+FROM public_pipedrive_analytics.int_activity
+WHERE TRUE
+    AND activity_type_short IN ('meeting','sc_2','follow_up','after_close_call')
+LIMIT 100;
+
+
+
+
+WITH stage_funnel AS (
+    SELECT
+        -- EXTRACT(MONTH FROM deal_change_timestamp) AS month
+        TO_CHAR(deal_change_timestamp, 'MM-YYYY') AS month_year
+        ,  CASE 
+            WHEN stage_name = 'Lead Generation' THEN 'Lead Generation'
+            WHEN stage_name = 'Qualified Lead' THEN 'Qualified Lead'
+            WHEN stage_name = 'Needs Assessment' THEN 'Needs Assessment'
+            WHEN stage_name = 'Proposal/Quote Preparation' THEN 'Proposal/Quote Preparation'
+            WHEN stage_name = 'Negotiation' THEN 'Negotiation'
+            WHEN stage_name = 'Closing' THEN 'Closing'
+            WHEN stage_name = 'Implementation/Onboarding' THEN 'Implementation/Onboarding'
+            WHEN stage_name = 'Follow-up/Customer Success' THEN 'Follow-up/Customer Success'
+            WHEN stage_name = 'Renewal/Expansion' THEN 'Renewal/Expansion'
+            ELSE NULL
+          END AS kpi_name
+        , CASE 
+            WHEN stage_name = 'Lead Generation' THEN 'Step 1'
+            WHEN stage_name = 'Qualified Lead' THEN 'Step 2'
+            WHEN stage_name = 'Needs Assessment' THEN 'Step 3'
+            WHEN stage_name = 'Proposal/Quote Preparation' THEN 'Step 4'
+            WHEN stage_name = 'Negotiation' THEN 'Step 5'
+            WHEN stage_name = 'Closing' THEN 'Step 6'
+            WHEN stage_name = 'Implementation/Onboarding' THEN 'Step 7'
+            WHEN stage_name = 'Follow-up/Customer Success' THEN 'Step 8'
+            WHEN stage_name = 'Renewal/Expansion' THEN 'Step 9'
+            ELSE NULL
+          END AS funnel_step
+        , deal_id
+    FROM public_pipedrive_analytics.int_deal_changes
+    WHERE TRUE
+        AND stage_name IS NOT NULL
+),
+activity_funnel AS (
+    SELECT
+        -- EXTRACT(MONTH FROM activity_due_timestamp) AS month
+        TO_CHAR(activity_due_timestamp, 'MM-YYYY') AS month_year
+        , CASE 
+            WHEN activity_type_short = 'meeting' THEN 'Sales Call 1'
+            WHEN activity_type_short = 'sc_2' THEN 'Sales Call 2'
+            WHEN activity_type_short = 'follow_up' THEN 'Follow-up/Customer Success'
+            WHEN activity_type_short = 'after_close_call' THEN 'Closing'
+            ELSE NULL
+          END AS kpi_name
+        , CASE 
+            WHEN activity_type_short = 'meeting' THEN 'Step 2.1'
+            WHEN activity_type_short = 'sc_2' THEN 'Step 3.1'
+            WHEN activity_type_short = 'after_close_call' THEN 'Step 6'
+            WHEN activity_type_short = 'follow_up' THEN 'Step 8'
+            ELSE NULL
+         END AS funnel_step
+        , deal_id
+    FROM public_pipedrive_analytics.int_activity
+    WHERE TRUE
+        AND activity_type_short IN ('meeting','sc_2','follow_up','after_close_call')
+),
+all_funnel AS (
+    SELECT * FROM stage_funnel
+    UNION ALL
+    SELECT * FROM activity_funnel
+),
+aggregated AS (
+    SELECT
+        month_year
+        , kpi_name
+        , funnel_step
+        , COUNT(DISTINCT deal_id) AS deals_count
+    FROM all_funnel
+    WHERE kpi_name IS NOT NULL
+    GROUP BY 1,2,3
+)
+
+SELECT *
+FROM aggregated
+ORDER BY 1 DESC, 3 ASC;
+
+SELECT * 
+FROM public_pipedrive_analytics.rep_sales_funnel_monthly
+WHERE TRUE
+    AND kpi_name LIKE '%Stage%'
+ORDER BY month_year DESC, funnel_step ASC
+
+
+SELECT * 
+FROM public_pipedrive_analytics.rep_sales_funnel_monthly
+WHERE TRUE
+    AND kpi_name LIKE '%Activity%'
+ORDER BY month_year DESC, funnel_step ASC
+
+
+
+SELECT * 
+FROM public_pipedrive_analytics.rep_sales_funnel_monthly
+WHERE TRUE
+    AND kpi_name LIKE '%Lost%'
+ORDER BY month_year DESC, funnel_step ASC
+
+
+
+
+
