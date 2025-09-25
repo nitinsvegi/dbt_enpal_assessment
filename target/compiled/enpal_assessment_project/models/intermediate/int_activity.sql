@@ -38,3 +38,5 @@ activity_type_enriched AS (
 SELECT *
 FROM activity_type_enriched
 
+
+    WHERE activity_id NOT IN (SELECT activity_id FROM "postgres"."public_pipedrive_analytics"."int_activity")

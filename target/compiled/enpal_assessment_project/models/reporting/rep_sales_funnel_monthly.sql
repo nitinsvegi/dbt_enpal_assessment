@@ -119,3 +119,6 @@ aggregated AS (
 SELECT *
 FROM aggregated
 
+
+    WHERE CONCAT(month_year, funnel_step) NOT IN 
+          (SELECT CONCAT(month_year, funnel_step) FROM "postgres"."public_pipedrive_analytics"."rep_sales_funnel_monthly")

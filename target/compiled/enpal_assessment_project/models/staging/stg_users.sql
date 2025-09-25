@@ -20,3 +20,6 @@ cleaned AS (
 SELECT *
 FROM cleaned
 
+
+      -- Only insert rows that don’t already exist in the target table
+    WHERE user_id NOT IN (SELECT user_id FROM "postgres"."public_pipedrive_analytics"."stg_users")

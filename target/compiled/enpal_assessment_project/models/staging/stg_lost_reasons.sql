@@ -30,3 +30,5 @@ cleaned AS (
 SELECT *
 FROM cleaned
 
+
+    WHERE lost_reason_id NOT IN (SELECT lost_reason_id FROM "postgres"."public_pipedrive_analytics"."stg_lost_reasons")

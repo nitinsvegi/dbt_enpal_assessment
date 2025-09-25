@@ -24,3 +24,5 @@ cleaned AS (
 SELECT *
 FROM cleaned
 
+
+    WHERE stage_id NOT IN (SELECT stage_id FROM "postgres"."public_pipedrive_analytics"."stg_stages")

@@ -30,3 +30,5 @@ cleaned AS (
 SELECT *
 FROM cleaned
 
+
+    WHERE field_key NOT IN (SELECT field_key FROM "postgres"."public_pipedrive_analytics"."stg_fields")

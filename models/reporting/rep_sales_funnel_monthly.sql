@@ -1,6 +1,6 @@
 {{ 
     config(
-        unique_key='month||funnel_step',
+        unique_key='month_year||funnel_step',
         materialized='incremental',
         on_schema_change='sync_all_columns',
         tags=['reporting', 'sales_funnel']
@@ -127,6 +127,6 @@ SELECT *
 FROM aggregated
 
 {% if is_incremental() %}
-    WHERE CONCAT(month, funnel_step) NOT IN 
-          (SELECT CONCAT(month, funnel_step) FROM {{ this }})
+    WHERE CONCAT(month_year, funnel_step) NOT IN 
+          (SELECT CONCAT(month_year, funnel_step) FROM {{ this }})
 {% endif %}

@@ -75,3 +75,5 @@ UNION ALL
 SELECT *
 FROM final
 
+
+    WHERE deal_id_sk NOT IN (SELECT deal_id_sk FROM "postgres"."public_pipedrive_analytics"."int_deal_changes")
