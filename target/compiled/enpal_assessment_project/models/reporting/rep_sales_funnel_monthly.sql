@@ -39,7 +39,7 @@ stage_funnel AS (
             ELSE NULL
           END AS funnel_step
         , deal_id
-    FROM "postgres"."public_pipedrive_analytics"."int_deal_changes"
+    FROM "postgres"."pipedrive_analytics"."int_deal_changes"
     WHERE TRUE
         AND stage_name IS NOT NULL
 ),
@@ -64,7 +64,7 @@ activity_funnel AS (
             ELSE NULL
          END AS funnel_step
         , deal_id
-    FROM "postgres"."public_pipedrive_analytics"."int_activity"
+    FROM "postgres"."pipedrive_analytics"."int_activity"
     WHERE TRUE
         AND activity_type_short IN ('meeting','sc_2','follow_up','after_close_call')
 ),
@@ -90,7 +90,7 @@ lost_reason_funnel AS (
             ELSE NULL
         END AS funnel_step
         , deal_id
-    FROM "postgres"."public_pipedrive_analytics"."int_deal_changes"
+    FROM "postgres"."pipedrive_analytics"."int_deal_changes"
     WHERE TRUE
     AND lost_reason_name IS NOT NULL
 ),
@@ -121,4 +121,4 @@ FROM aggregated
 
 
     WHERE CONCAT(month_year, funnel_step) NOT IN 
-          (SELECT CONCAT(month_year, funnel_step) FROM "postgres"."public_pipedrive_analytics"."rep_sales_funnel_monthly")
+          (SELECT CONCAT(month_year, funnel_step) FROM "postgres"."pipedrive_analytics"."rep_sales_funnel_monthly")

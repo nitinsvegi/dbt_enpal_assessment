@@ -6,7 +6,7 @@
 
 WITH raw AS (
     SELECT *
-    FROM "postgres"."public_pipedrive_analytics"."stg_fields"
+    FROM "postgres"."pipedrive_analytics"."stg_fields"
     WHERE field_key = 'lost_reason'
 ),
 unnested AS (
@@ -31,4 +31,4 @@ SELECT *
 FROM cleaned
 
 
-    WHERE lost_reason_id NOT IN (SELECT lost_reason_id FROM "postgres"."public_pipedrive_analytics"."stg_lost_reasons")
+    WHERE lost_reason_id NOT IN (SELECT lost_reason_id FROM "postgres"."pipedrive_analytics"."stg_lost_reasons")

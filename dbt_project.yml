@@ -23,6 +23,27 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
 
 
+
+# -------------------------------
+# Adding varibale mappings heret=wha
+# -------------------------------
+vars:
+  stg_schemas:
+    stg_users: pipedrive_analytics
+    stg_activity: pipedrive_analytics
+    stg_activity_types: pipedrive_analytics
+    stg_deal_changes: pipedrive_analytics
+    stg_fields: pipedrive_analytics
+    stg_stages: pipedrive_analytics
+    stg_lost_reasons: pipedrive_analytics
+
+  int_schemas:
+    int_deal_changes: pipedrive_analytics
+    int_activity: pipedrive_analytics
+
+  rep_schemas:
+    rep_sales_funnel_monthly: pipedrive_analytics
+
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
 

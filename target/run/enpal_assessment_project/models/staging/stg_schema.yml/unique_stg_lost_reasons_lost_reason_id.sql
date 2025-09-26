@@ -14,7 +14,7 @@ select
     lost_reason_id as unique_field,
     count(*) as n_records
 
-from "postgres"."public_pipedrive_analytics"."stg_lost_reasons"
+from "postgres"."pipedrive_analytics"."stg_lost_reasons"
 where lost_reason_id is not null
 group by lost_reason_id
 having count(*) > 1

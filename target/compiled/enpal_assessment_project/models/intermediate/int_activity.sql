@@ -5,7 +5,7 @@
 
 WITH base AS (
     SELECT *
-    FROM "postgres"."public_pipedrive_analytics"."stg_activity"
+    FROM "postgres"."pipedrive_analytics"."stg_activity"
 ),
 
 user_enriched AS (
@@ -21,7 +21,7 @@ user_enriched AS (
         , b.dwh_creation_timestamp
         , b.dwh_modified_timestamp
     FROM base b
-    LEFT JOIN "postgres"."public_pipedrive_analytics"."stg_users" u
+    LEFT JOIN "postgres"."pipedrive_analytics"."stg_users" u
       ON b.user_id = u.user_id
 ),
 
@@ -31,7 +31,7 @@ activity_type_enriched AS (
         , at.activity_type_name
         , at.is_activity_type_active
     FROM user_enriched ue
-    LEFT JOIN "postgres"."public_pipedrive_analytics"."stg_activity_types" at
+    LEFT JOIN "postgres"."pipedrive_analytics"."stg_activity_types" at
       ON ue.activity_type_short = at.activity_type_short
 )
 
@@ -39,4 +39,4 @@ SELECT *
 FROM activity_type_enriched
 
 
-    WHERE activity_id NOT IN (SELECT activity_id FROM "postgres"."public_pipedrive_analytics"."int_activity")
+    WHERE activity_id NOT IN (SELECT activity_id FROM "postgres"."pipedrive_analytics"."int_activity")

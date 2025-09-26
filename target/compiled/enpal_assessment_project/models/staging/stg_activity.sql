@@ -43,4 +43,4 @@ FROM cleaned
 
 
     -- Only insert rows that don’t already exist in the target table
-    WHERE activity_id NOT IN (SELECT activity_id FROM "postgres"."public_pipedrive_analytics"."stg_activity")
+    WHERE activity_id NOT IN (SELECT activity_id FROM "postgres"."pipedrive_analytics"."stg_activity")

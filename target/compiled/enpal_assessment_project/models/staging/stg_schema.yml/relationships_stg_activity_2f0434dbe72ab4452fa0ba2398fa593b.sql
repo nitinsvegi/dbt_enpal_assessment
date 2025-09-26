@@ -4,13 +4,13 @@
 
 with child as (
     select activity_type_short as from_field
-    from "postgres"."public_pipedrive_analytics"."stg_activity"
+    from "postgres"."pipedrive_analytics"."stg_activity"
     where activity_type_short is not null
 ),
 
 parent as (
     select activity_type_short as to_field
-    from "postgres"."public_pipedrive_analytics"."stg_activity_types"
+    from "postgres"."pipedrive_analytics"."stg_activity_types"
 )
 
 select

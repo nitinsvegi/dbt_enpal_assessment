@@ -5,7 +5,7 @@
 
 WITH base AS (
     SELECT *
-    FROM "postgres"."public_pipedrive_analytics"."stg_deal_changes"
+    FROM "postgres"."pipedrive_analytics"."stg_deal_changes"
 ),
 
 -- Bring in stage names when the change refers to stage_id
@@ -21,7 +21,7 @@ stage_enriched AS (
         , b.dwh_creation_timestamp
         , b.dwh_modified_timestamp
     FROM base b
-    LEFT JOIN "postgres"."public_pipedrive_analytics"."stg_stages" s
+    LEFT JOIN "postgres"."pipedrive_analytics"."stg_stages" s
      ON b.deal_new_value = CAST(s.stage_id AS TEXT)
     WHERE TRUE
         AND b.deal_updated_field_key = 'stage_id'
@@ -40,7 +40,7 @@ lost_reason_enriched AS (
         , b.dwh_creation_timestamp
         , b.dwh_modified_timestamp
     FROM base b
-    LEFT JOIN "postgres"."public_pipedrive_analytics"."stg_lost_reasons" lr
+    LEFT JOIN "postgres"."pipedrive_analytics"."stg_lost_reasons" lr
      ON  b.deal_new_value = CAST(lr.lost_reason_id AS TEXT)
     WHERE TRUE
         AND b.deal_updated_field_key = 'lost_reason'
@@ -76,4 +76,4 @@ SELECT *
 FROM final
 
 
-    WHERE deal_id_sk NOT IN (SELECT deal_id_sk FROM "postgres"."public_pipedrive_analytics"."int_deal_changes")
+    WHERE deal_id_sk NOT IN (SELECT deal_id_sk FROM "postgres"."pipedrive_analytics"."int_deal_changes")

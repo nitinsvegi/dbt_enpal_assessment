@@ -39,4 +39,4 @@ FROM cleaned
 
 
     -- Only include new rows based on surrogate key
-    WHERE deal_id_sk NOT IN (SELECT deal_id_sk FROM "postgres"."public_pipedrive_analytics"."stg_deal_changes")
+    WHERE deal_id_sk NOT IN (SELECT deal_id_sk FROM "postgres"."pipedrive_analytics"."stg_deal_changes")

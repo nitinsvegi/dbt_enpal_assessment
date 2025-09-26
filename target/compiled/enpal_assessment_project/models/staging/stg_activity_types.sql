@@ -22,4 +22,4 @@ SELECT *
 FROM cleaned
 
 
-    WHERE activity_type_id NOT IN (SELECT activity_type_id FROM "postgres"."public_pipedrive_analytics"."stg_activity_types")
+    WHERE activity_type_id NOT IN (SELECT activity_type_id FROM "postgres"."pipedrive_analytics"."stg_activity_types")
