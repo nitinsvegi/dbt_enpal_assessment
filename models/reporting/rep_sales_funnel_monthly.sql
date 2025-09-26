@@ -73,6 +73,7 @@ activity_funnel AS (
         , deal_id
     FROM {{ ref('int_activity') }}
     WHERE TRUE
+        AND is_activity_done_status = TRUE -- Only consider completed activities
         AND activity_type_short IN ('meeting','sc_2','follow_up','after_close_call')
 ),
 
