@@ -23,10 +23,15 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
 
 
-
 # -------------------------------
-# Adding varibale mappings heret=wha
+# Adding variable mappings here
 # -------------------------------
+# These vars define the target schemas for models in each layer:
+# - stg_schemas: staging models
+# - int_schemas: intermediate models
+# - rep_schemas: reporting models
+# The macros (custom_schema + generate_schema_name) use these vars
+# to build each model in the correct schema.
 vars:
   stg_schemas:
     stg_users: pipedrive_analytics
@@ -43,6 +48,10 @@ vars:
 
   rep_schemas:
     rep_sales_funnel_monthly: pipedrive_analytics
+
+# Using a single schema for all layers since this is a take-home assessment 
+# and the target databases aren't pre-created. In a real setup, these would 
+# map to separate staging/intermediate/reporting schemas.   
 
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
