@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: postgres_public
+    database: postgres
+    schema: public
+    tables:
+      - name: activity
