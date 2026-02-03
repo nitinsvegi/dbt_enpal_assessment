@@ -1,0 +1,146 @@
+version: 2
+
+models:
+
+  # ----------------------------------
+  # int_deal_stage_history
+  # ----------------------------------
+  - name: int_deal_stage_history
+    description: >
+      State-based deal stage history model. Each row represents a continuous
+      period a deal remained in a stage. Used to determine when a deal first
+      entered a funnel stage.
+    owner: nvegi
+    meta:
+      grain: one row per deal per stage entry period
+    columns:
+      - name: deal_stage_history_sk
+        description: Surrogate key for the stage history record
+        tests:
+          - unique
+          - not_null
+
+      - name: deal_id
+        description: Business identifier for the deal
+        tests:
+          - not_null
+
+      - name: stage_id
+        description: Stage identifier from CRM
+
+      - name: valid_from
+        description: Timestamp when the deal entered this stage
+        tests:
+          - not_null
+
+      - name: valid_to
+        description: Timestamp when the deal exited this stage (NULL = current stage)
+
+      - name: is_first_entry
+        description: Flag indicating the first time the deal ever reached this stage
+
+      - name: dwh_creation_timestamp
+        description: Warehouse load timestamp
+
+
+  # ----------------------------------
+  # int_activities
+  # ----------------------------------
+  - name: int_activities
+    description: >
+      Activity-level fact table enriched with activity type and funnel mapping.
+      Grain remains at the activity occurrence level.
+    owner: nvegi
+    meta:
+      grain: one row per activity occurrence
+    columns:
+      - name: activity_event_sk
+        description: Surrogate key for the activity event
+        tests:
+          - unique
+          - not_null
+
+      - name: activity_id
+        description: Raw activity id from source
+        tests:
+          - not_null
+
+      - name: activity_type_name
+        description: Name of the activity type
+        tests:
+          - not_null
+      - name: deal_id
+        description: Associated deal id
+
+      - name: user_id
+        description: Assigned user
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_users')
+                field: user_id
+
+      - name: activity_due_timestamp
+        description: Scheduled due timestamp of the activity
+
+      - name: is_activity_done_status
+        description: Indicates if activity was completed
+
+      - name: activity_type_id
+        description: FK to activity types
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_activity_types')
+                field: activity_type_id
+
+      - name: activity_type_short
+        description: Short activity type code
+
+      - name: is_activity_type_active
+        description: Active flag from activity_types
+
+      - name: funnel_order_id
+        description: Funnel order mapping from seed (nullable)
+
+      - name: funnel_step
+        description: Funnel step label (nullable)
+
+      - name: kpi_name
+        description: KPI name for reporting (nullable)
+
+
+  # ----------------------------------
+  # int_activities_funnel
+  # ----------------------------------
+  - name: int_activities_funnel
+    description: >
+      Deal-level activity funnel entry model. Each row represents the first time
+      a deal completed an activity that corresponds to a funnel step.
+    owner: nvegi
+    meta:
+      grain: one row per deal per activity-based funnel step entry
+    columns:
+      - name: deal_activity_funnel_sk
+        description: Surrogate key for deal funnel activity entry
+        tests:
+          - unique
+          - not_null
+
+      - name: deal_id
+        description: Deal identifier
+
+      - name: funnel_order_id
+        description: Funnel step order
+
+      - name: funnel_step
+        description: Funnel step label
+
+      - name: kpi_name
+        description: KPI label
+
+      - name: valid_from
+        description: Timestamp when deal first satisfied this funnel step
+    
+      - name: dwh_creation_timestamp
+        description: Warehouse load timestamp

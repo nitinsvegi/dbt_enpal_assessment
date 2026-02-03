@@ -5,4 +5,10 @@ sources:
     database: postgres
     schema: public
     tables:
+      - name: users
       - name: activity
+      - name: activity_types
+      - name: deal_changes
+      - name: fields
+      - name: stages
+      - name: funnel_steps  

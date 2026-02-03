@@ -1,0 +1,23 @@
+version: 2
+seeds:
+  - name: funnel_steps
+    description: "Canonical funnel mapping: numeric order + human label + optional stage/activity keys."
+    columns:
+      - name: funnel_order_id
+        description: Primary key and integer ordering for the funnel
+        tests:
+          - not_null
+          - unique
+      - name: funnel_step
+        description: Human-facing step label (e.g. '2.1')
+        tests:
+          - not_null
+          - unique
+      - name: stage_id
+        description: Pipedrive stage id if the step is stage-driven; null for activity-only mappings.
+      - name: activity_type_short
+        description: Activity short code used to map activities (e.g. 'meeting', 'sc_2')
+      - name: kpi_name
+        description: Readable KPI name for the reporting layer
+        tests:
+          - not_null

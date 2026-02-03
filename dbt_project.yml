@@ -23,6 +23,39 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
 
 
+# -------------------------------
+# Adding variable mappings here
+# -------------------------------
+# These vars define the target schemas for models in each layer:
+# - stg_schemas: staging models
+# - int_schemas: intermediate models
+# - rep_schemas: reporting models
+# The macros (custom_schema + generate_schema_name) use these vars
+# to build each model in the correct schema.
+vars:
+  stg_schemas:
+    stg_users: pipedrive_analytics
+    stg_activities: pipedrive_analytics
+    stg_activity_types: pipedrive_analytics
+    stg_deal_changes: pipedrive_analytics
+    stg_fields: pipedrive_analytics
+    stg_stages: pipedrive_analytics
+    stg_lost_reasons: pipedrive_analytics
+
+  int_schemas:
+    int_deal_stage_history: pipedrive_analytics
+    int_activities: pipedrive_analytics
+    int_activities_funnel: pipedrive_analytics
+
+  rep_schemas:
+    rep_months_funnel_grid: pipedrive_analytics 
+    rep_sales_funnel_monthly: pipedrive_analytics
+
+# Using a single schema for all layers since this is a take-home assessment 
+# and the target databases aren't pre-created. In a real setup, these would 
+# map to separate staging/intermediate/reporting schemas.   
+
+
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
 
@@ -34,3 +67,14 @@ models:
     # Config indicated by + and applies to all files under models/example/
     +schema: pipedrive_analytics
     +materialized: table
+
+
+# Seeds configuration 
+# All seeds default to pipedrive_analytics
+# ----------------------------------------
+seeds:
+  enpal_assessment_project:
+    +schema: pipedrive_analytics
+    
+    funnel_steps:
+      +schema: pipedrive_analytics

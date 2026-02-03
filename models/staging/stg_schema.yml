@@ -1,0 +1,205 @@
+version: 2
+
+models:
+
+# -------------------
+# stg_users
+# -------------------
+  - name: stg_users
+    description: A staging table that holds user data
+    owner: nvegi
+    meta:
+      grain: user_id
+    columns:
+      - name: user_id
+        description: Primary key for user table
+        tests:
+          - unique
+          - not_null
+      - name: user_name
+        description: User Name
+        tests:
+          - not_null
+      - name: user_email
+        description: User Email
+      - name: dwh_creation_timestamp
+        description: '{{ doc("dwh_creation_timestamp") }}'
+      - name: dwh_modified_timestamp
+        description: '{{ doc("dwh_modified_timestamp") }}'
+
+
+# -------------------
+# stg_activity_types
+# -------------------
+  - name: stg_activity_types
+    description: A staging table that holds activity type data
+    owner: nvegi
+    meta:
+      grain: activity_type_id
+    columns:
+      - name: activity_type_id
+        description: Primary key for activity type table
+        tests:
+          - unique
+          - not_null
+      - name: activity_type_name
+        description: Name of the activity type
+        tests:
+          - not_null
+      - name: activity_type_short
+        description: The short name of the activity type
+        tests:
+          - not_null
+      - name: is_activity_type_active
+        description: Status of the activity type
+        tests:
+          - not_null
+
+
+# -------------------
+# stg_fields
+# -------------------
+  - name: stg_fields
+    description: Staging table for CRM deal fields. Contains metadata and picklist options.
+    owner: nvegi
+    meta:
+      grain: field_id
+    columns:
+      - name: field_id
+        description: Primary key for field table
+        tests:
+          - unique
+          - not_null
+      - name: field_key
+        description: Unique identifier for a deal field. Corresponds to a attribute in the CRM (e.g., stage_id, lost_reason, add_time, user_id). Serves as the primary key in this staging table.
+        tests:
+          - unique
+          - not_null
+      - name: field_name
+        description: Name of the field
+        tests:
+          - not_null
+      - name: field_value_options
+        description: JSON array containing picklist options. Only applicable for fields that have predefined choices (e.g., stage_id, lost_reason)
+
+
+# -------------------
+# stg_stages
+# -------------------
+  - name: stg_stages
+    description: Serves as the staging table for deal funnel stages.
+    owner: nvegi
+    meta:
+      grain: stage_id
+    columns:
+      - name: stage_id
+        description: Unique identifier for each stage in the sales funnel. Corresponds to the stage_id in the raw stages table and matches values in deal_changes.new_value when changed_field_key = 'stage_id'. Serves as the primary key for this staging table.
+        tests:
+          - unique
+          - not_null
+      - name: stage_name
+        description: Name of the stage. Examples are Lead Generation, Qualified Lead, Needs Assessment, etc. Used for reporting and display purposes.
+        tests:
+          - not_null
+
+
+# -------------------
+# stg_lost_reasons
+# -------------------
+  - name: stg_lost_reasons
+    description: Serves as the staging table for lost reasons
+    owner: nvegi
+    meta:
+      grain: lost_reason_id
+    columns:
+      - name: lost_reason_id
+        description: Unique identifier for the lost reason. Corresponds to the values in deal_changes.new_value when changed_field_key = 'lost_reason'. Serves as the primary key for this staging table.
+        tests:
+          - unique
+          - not_null
+      - name: lost_reason_name
+        description: Name of the lost reason. Examples are Customer Not Ready, Pricing Issue, Unreachable Customer, etc. Used for reporting and display purposes.
+        tests:
+          - not_null
+
+# -------------------
+# stg_deal_changes
+# -------------------
+  - name: stg_deal_changes
+    description: A staging table that holds deal changes data
+    owner: nvegi
+    meta:
+      grain: deal_change_sk
+    columns:
+      - name: deal_change_sk
+        description:  Surrogate key for the deal change record. Created as a combination of deal_id, change_time, changed_field_key to ensure uniqueness across all rows.
+        tests:
+          - unique
+          - not_null
+      - name: deal_id
+        description: Original deal identifier from Pipedrive
+        tests:
+          - not_null
+      - name: dwh_creation_timestamp
+        description: '{{ doc("dwh_creation_timestamp") }}'
+      - name: deal_change_timestamp
+        description: The original timestamp from the source system when this deal change occurred (changed_time)
+      - name: deal_updated_field_key
+        description: Field key that was changed
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_fields')
+                field: field_key
+      - name: deal_new_value
+        description: New value after the deal change. Can represent different types of updates depending on deal_updated_field_key i.e. timestamp of deal creation, user assigned to the deal, stage ID (maps to stages table), lost reason ID (maps to stg_lost_reasons table)
+
+# -------------------
+# stg_activities
+# -------------------
+  - name: stg_activities
+    description: A staging table that holds activity data
+    owner: nvegi
+    meta:
+      grain: activity_event_sk
+    columns:
+      - name: activity_event_sk
+        description: Surrogate key for the activity record. Created as a combination of activity_id, assigned_to_user and due_to to ensure uniqueness across all rows.
+        tests:
+          - unique
+          - not_null
+      - name: activity_id
+        description: Activity identifier from Pipedrive
+        tests:
+          - not_null
+      - name: activity_type_short
+        description: The short name of the activity type
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_activity_types')
+                field: activity_type_short
+      - name: user_id
+        description: Foreign key to user table
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_users')
+                field: user_id
+      - name: deal_id
+        description: Foreign key to deal table
+#        tests:
+#          - relationships:
+#              arguments:
+#                to: ref('stg_deal_changes')
+#                field: deal_id
+# Note: This test will fail as  deal_ids that exist in stg_activity don’t have a matching record in stg_deal_changes.
+      - name: is_activity_done_status
+        description: Status of the activity
+      - name: activity_due_timestamp
+        description: The scheduled due timestamp for the activity
+      - name: dwh_creation_timestamp
+        description: '{{ doc("dwh_creation_timestamp") }}'

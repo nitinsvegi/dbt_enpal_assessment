@@ -1,0 +1,88 @@
+version: 2
+
+models:
+
+  # ----------------------------
+  # rep_months_funnel_grid
+  # ----------------------------
+  - name: rep_months_funnel_grid
+    description: >
+      Reporting scaffold table containing every month in the data range crossed
+      with every funnel step from the funnel_steps seed. Ensures the final report
+      contains zero-filled rows for months or steps with no deal entries.
+    owner: nvegi
+    meta:
+      grain: one row per month per funnel step
+    columns:
+      - name: dt_month
+        description: First day of the calendar month (date)
+        tests:
+          - not_null
+
+      - name: dt_month_string
+        description: Month in YYYY-MM string format
+        tests:
+          - not_null
+
+      - name: funnel_order_id
+        description: Ordering of funnel steps from the seed table
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('funnel_steps')
+                field: funnel_order_id
+
+      - name: funnel_step
+        description: Funnel step identifier (e.g., '2.1', '3')
+
+      - name: kpi_name
+        description: Human-readable KPI label
+
+
+  # ----------------------------
+  # rep_sales_funnel_monthly
+  # ----------------------------
+  - name: rep_sales_funnel_monthly
+    description: >
+      Monthly sales funnel entry metrics. Measures how many distinct deals
+      entered each funnel step per month. Combines stage-based progression
+      (int_deal_stage_history) and activity-driven progression (int_activities_funnel).
+      Zero values represent months where no deals entered a step.
+    owner: nvegi
+    meta:
+      grain: one row per month per funnel step
+    columns:
+      - name: month
+        description: The calendar month in YYYY-MM format
+        tests:
+          - not_null
+
+      - name: kpi_name
+        description: Canonical funnel KPI label
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Lead Generation'
+                  - 'Qualified Lead'
+                  - 'Sales Call 1'
+                  - 'Needs Assessment'
+                  - 'Sales Call 2'
+                  - 'Proposal/Quote Preparation'
+                  - 'Negotiation'
+                  - 'Closing'
+                  - 'Implementation/Onboarding'
+                  - 'Follow-up/Customer Success'
+                  - 'Renewal/Expansion'
+
+      - name: funnel_step
+        description: Funnel step identifier (e.g., '2.1', '3')
+
+      - name: deals_count
+        description: >
+          Number of distinct deals that entered this funnel step in the given month.
+          A deal is counted only once per step based on its first entry.
+        tests:
+          - not_null

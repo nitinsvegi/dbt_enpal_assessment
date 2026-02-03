@@ -1,0 +1,12 @@
+funnel_order_id,funnel_step,stage_id,activity_type_short,kpi_name
+1,1,1,,Lead Generation
+2,2,2,,Qualified Lead
+3,2.1,,meeting,Sales Call 1
+4,3,3,,Needs Assessment
+5,3.1,,sc_2,Sales Call 2
+6,4,4,,Proposal/Quote Preparation
+7,5,5,,Negotiation
+8,6,6,,Closing
+9,7,7,,Implementation/Onboarding
+10,8,8,,Follow-up/Customer Success
+11,9,9,,Renewal/Expansion
